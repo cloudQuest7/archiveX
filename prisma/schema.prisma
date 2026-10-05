@@ -1,0 +1,172 @@
+// Prisma schema for ARCHIVE
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum DomainStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+  PENDING
+}
+
+enum DiscoverySource {
+  html
+  sitemap
+  sitemap_index
+  robots
+  canonical
+  pagination
+  feed
+}
+
+enum ArchiveService {
+  wayback
+  archive_today
+  mock
+}
+
+enum SubmissionStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+enum QueueStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+enum ScanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  domains     Domain[]
+
+  @@map("projects")
+}
+
+model Domain {
+  id                String          @id @default(cuid())
+  projectId         String
+  hostname          String
+  originalUrl       String
+  status            DomainStatus    @default(PENDING)
+  lastScanAt        DateTime?
+  lastSubmissionAt  DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  urls              UrlRecord[]
+  scans             Scan[]
+  jobs              QueueJob[]
+
+  @@unique([projectId, hostname])
+  @@map("domains")
+}
+
+model UrlRecord {
+  id                  String              @id @default(cuid())
+  domainId            String
+  originalUrl         String
+  normalizedUrl       String
+  discoverySource     DiscoverySource
+  httpStatus          Int?
+  isAccessible        Boolean             @default(false)
+  firstDiscoveredAt   DateTime            @default(now())
+  lastDiscoveredAt    DateTime            @default(now())
+  domain              Domain              @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  submissions         Submission[]
+  jobs                QueueJob[]
+
+  @@unique([domainId, normalizedUrl])
+  @@index([normalizedUrl])
+  @@map("url_records")
+}
+
+model Submission {
+  id                String            @id @default(cuid())
+  urlRecordId       String
+  service           ArchiveService
+  status            SubmissionStatus  @default(PENDING)
+  submittedAt       DateTime          @default(now())
+  completedAt       DateTime?
+  archiveUrl        String?
+  archiveIdentifier String?
+  errorMessage      String?
+  lastAttemptAt     DateTime?
+  attemptCount      Int               @default(0)
+  isMock            Boolean           @default(false)
+  urlRecord         UrlRecord         @relation(fields: [urlRecordId], references: [id], onDelete: Cascade)
+
+  @@index([urlRecordId, status])
+  @@index([service, status])
+  @@map("submissions")
+}
+
+model QueueJob {
+  id            String      @id @default(cuid())
+  urlRecordId   String
+  domainId      String
+  service       ArchiveService
+  status        QueueStatus @default(PENDING)
+  priority      Int         @default(0)
+  attempts      Int         @default(0)
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  urlRecord     UrlRecord   @relation(fields: [urlRecordId], references: [id], onDelete: Cascade)
+  domain        Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@index([status, priority, createdAt])
+  @@index([domainId])
+  @@map("queue_jobs")
+}
+
+model Scan {
+  id                String      @id @default(cuid())
+  domainId          String
+  status            ScanStatus  @default(PENDING)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  discoveredCount   Int         @default(0)
+  newUrlCount       Int         @default(0)
+  errorMessage      String?
+  domain            Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@map("scans")
+}
+
+model AppSetting {
+  id                 Int           @id @default(1)
+  maxUrls            Int           @default(500)
+  requestTimeoutMs   Int           @default(10000)
+  crawlConcurrency   Int           @default(2)
+  defaultProvider    ArchiveService @default(mock)
+  maxAttempts        Int           @default(3)
+  workerPaused       Boolean       @default(false)
+  updatedAt          DateTime      @updatedAt
+
+  @@map("app_settings")
+}
