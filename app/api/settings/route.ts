@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db/prisma";
 import { AppSettingsSchema } from "@/lib/validation/zod-schemas";
 import { getWorkerState } from "@/lib/queue/worker";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const settings = await prisma.appSetting.upsert({
     where: { id: 1 },
