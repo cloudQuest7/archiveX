@@ -149,7 +149,7 @@ export function DashboardContent({ initialDomains = [] }: { initialDomains?: Pro
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <KpiCard icon={Building2} label="Total Domains" value={counts.totalDomains} />
         <KpiCard icon={LinkIcon} label="Total URLs" value={counts.totalUrls} />
         <KpiCard icon={Clock} label="Queued" value={overview?.pending ?? counts.queued} />
@@ -283,7 +283,7 @@ export function DashboardContent({ initialDomains = [] }: { initialDomains?: Pro
 
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           <QuickActionCard title="Add website" icon={Plus} onClick={() => setDialogOpen(true)} />
           <QuickActionCard title="Start scan" icon={Play} onClick={() => setPickerOpen(true)} />
           <QuickActionCard title="View queue" icon={ListTodo} href="/queue" />

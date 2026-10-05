@@ -97,17 +97,17 @@ export function DialogContent({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={() => setOpen(false)}
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-xl border bg-background shadow-2xl",
+          "relative z-10 w-full max-w-[95vw] sm:max-w-lg rounded-t-2xl sm:rounded-xl border bg-background shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin",
           className
         )}
       >
